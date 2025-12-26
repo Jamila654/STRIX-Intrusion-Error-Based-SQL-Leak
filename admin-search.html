@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADMIN//ERROR LEAK</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Share+Tech+Mono&display=swap');
+        body { margin: 0; height: 100vh; background: #000; color: #0f0; font-family: 'Share Tech Mono', monospace; overflow: hidden; position: relative; transition: all 0.5s; }
+        canvas { position: absolute; top: 0; left: 0; z-index: 1; }
+        .overlay { position: relative; z-index: 2; height: 100vh; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.7); }
+        .terminal { width: 90%; max-width: 900px; padding: 40px; border: 3px solid #0ff; border-radius: 15px; box-shadow: 0 0 60px #0ff; text-align: center; }
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 3.5em; text-shadow: 0 0 40px #0ff; }
+        input { background: #001; border: 2px solid #0ff; color: #0ff; padding: 15px; width: 80%; font-size: 1.3em; box-shadow: 0 0 20px #0ff; }
+        button { background: #000; border: 2px solid #0ff; color: #0ff; padding: 15px 35px; font-size: 1.4em; cursor: pointer; box-shadow: 0 0 20px #0ff; }
+        button:hover { background: #0ff; color: #000; }
+        pre { background: #111; padding: 20px; border: 1px solid #0ff; margin: 30px 0; font-size: 1.1em; text-align: left; white-space: pre-wrap; box-shadow: inset 0 0 20px #0ff; }
+        #output { min-height: 100px; font-size: 1.5em; }
+        .crash { background: #300 !important; animation: crash 0.8s infinite; }
+        @keyframes crash {
+            0%,100% { transform: translate(0); }
+            25% { transform: translate(-10px, 10px); }
+            50% { transform: translate(10px, -10px); }
+            75% { transform: translate(-10px, -10px); }
+        }
+        .leak { color: #f00; font-size: 2em; text-shadow: 0 0 30px #f00; }
+    </style>
+</head>
+<body id="body">
+    <canvas id="matrix"></canvas>
+
+    <div class="overlay">
+        <div class="terminal">
+            <h1>ERROR-BASED LEAK</h1>
+            <p>>>> Force a database error to extract sensitive data</p>
+
+            <input type="text" id="query" placeholder="Search name or inject...">
+            <button onclick="errorSearch()">QUERY</button>
+
+            <pre id="sql"></pre>
+            <div id="output">>>>> READY</div>
+
+            <a href="/" style="color: #0ff;">EXIT</a>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+        function draw() {
+            ctx.fillStyle = 'rgba(0,0,0,0.05)';
+            ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle = '#0f0';
+            ctx.font = `${fontSize}px monospace`;
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i*fontSize, drops[i]*fontSize);
+                if (drops[i]*fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                drops[i]++;
+            }
+        }
+        setInterval(draw, 35);
+
+        const obfuscated = "\x2b\x35\x3b\x0a\x0c\x3d\x47\x5e\x5b\x5a\x16\x3e\x0b\x22\x27\x23\x56\x6f\x41\x44\x14\x08\x36\x2e\x35\x35\x46\x55\x40\x48";
+        const key = "xaiCTF2025";
+        const FLAG = (function() {
+            let f = '';
+            for (let i = 0; i < obfuscated.length; i++) {
+                f += String.fromCharCode(obfuscated.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+            }
+            return f;
+        })();
+
+        const students = [
+            "Alice Johnson", "Bob Smith", "Charlie Brown", "David Lee"
+        ];
+
+        function errorSearch() {
+            const input = document.getElementById("query").value.trim();
+            const sql = `SELECT * FROM users WHERE name = '${input}'`;
+
+            document.getElementById("sql").textContent = `EXECUTED: ${sql}`;
+            document.getElementById("output").innerHTML = ">>>> PROCESSING...";
+
+            const body = document.getElementById("body");
+            body.classList.remove("crash");
+
+            if (students.some(s => s.toLowerCase().includes(input.toLowerCase()))) {
+                document.getElementById("output").innerHTML = ">>>> Results found (normal user)";
+                return;
+            }
+
+            if (input.includes("'") && input.match(/'\s*OR\s*.+=\s*CONVERT|int|CAST|\(\s*SELECT/i)) {
+                body.classList.add("crash");
+                document.getElementById("output").innerHTML = `
+                    <span class="leak">DATABASE ERROR!</span><br>
+                    Invalid conversion leak: The secret flag is "${FLAG}"
+                `;
+            } else if (input.includes("'")) {
+                document.getElementById("output").innerHTML = ">>>> Syntax error... but no leak";
+            } else {
+                document.getElementById("output").innerHTML = ">>>> No results";
+            }
+        }
+    </script>
+</body>
+</html>

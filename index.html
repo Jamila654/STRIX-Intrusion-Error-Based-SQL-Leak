@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STRIX//INTRUSION</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&family=Share+Tech+Mono&display=swap');
+    body { margin: 0; height: 100vh; background: #000; color: #0f0; font-family: 'Share Tech Mono', monospace; overflow: hidden; position: relative; }
+    canvas { position: absolute; top: 0; left: 0; z-index: 1; }
+    .overlay { position: relative; z-index: 2; height: 100vh; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); padding: 20px; }
+    .terminal { width: 95%; max-width: 900px; padding: 30px; border: 2px solid #0f0; border-radius: 10px; box-shadow: 0 0 30px #0f0; text-align: center; overflow-y: auto; }
+    h1 { font-family: 'Orbitron', sans-serif; font-size: 3em; text-shadow: 0 0 20px #0f0; }
+    input { background: #111; border: 1px solid #0f0; color: #0f0; padding: 12px; width: 70%; font-size: 1.2em; box-shadow: 0 0 10px #0f0; }
+    button { background: #000; border: 2px solid #0f0; color: #0f0; padding: 12px 30px; font-size: 1.2em; cursor: pointer; margin-left: 10px; box-shadow: 0 0 15px #0f0; }
+    button:hover { background: #0f0; color: #000; }
+    #result { margin-top: 30px; background: #111; padding: 20px; border: 1px solid #0f0; box-shadow: inset 0 0 20px #0f0; }
+    .hint { margin-top: 50px; font-size: 0.9em; opacity: 0.7; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #0f0; padding: 10px; }
+  </style>
+</head>
+<body>
+  <canvas id="matrix"></canvas>
+  <div class="overlay">
+    <div class="terminal">
+      <h1>STRIX UNIVERSITY // ACCESS DENIED</h1>
+      <p>>>> Public student search active. Admin access restricted.</p>
+      <input type="text" id="search" placeholder="ENTER QUERY >>">
+      <button onclick="searchStudent()">EXECUTE</button>
+      <div id="result"></div>
+
+      <p class="hint">
+        <!-- HINT: Breach deeper → /admin-search.html -->
+        <!-- HINT: 4 columns. UNION needed for root. -->
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Matrix rain + public search (NO FLAG HERE)
+    const canvas = document.getElementById('matrix');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+    const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+    const fontSize = 14; const columns = canvas.width / fontSize;
+    const drops = Array(Math.floor(columns)).fill(1);
+    function draw() {
+      ctx.fillStyle = 'rgba(0,0,0,0.05)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle = '#0f0'; ctx.font = `${fontSize}px monospace`;
+      for (let i = 0; i < drops.length; i++) {
+        const text = chars[Math.floor(Math.random() * chars.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
+      }
+    }
+    setInterval(draw, 35);
+    window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+
+    function searchStudent() {
+      const query = document.getElementById("search").value.trim();
+      if (!query) return;
+      const fakeQuery = `SELECT id, name, email, role FROM students WHERE name LIKE '%${query}%'`;
+      document.getElementById("result").innerHTML = `<p>>>> EXECUTED: ${fakeQuery}</p><div id="table"></div>`;
+      const students = [
+        { id: 1, name: "Alice Johnson", email: "alice@strix.edu", role: "student" },
+        { id: 2, name: "Bob Smith", email: "bob@strix.edu", role: "student" },
+        { id: 3, name: "Charlie Brown", email: "charlie@strix.edu", role: "student" }
+      ];
+      let results = students.filter(s => s.name.toLowerCase().includes(query.toLowerCase()));
+      if (query === "*" || query.includes("' OR '1'='1")) results = students;
+      if (results.length > 0) {
+        let table = "<table><tr><th>ID</th><th>NAME</th><th>EMAIL</th><th>ROLE</th></tr>";
+        results.forEach(r => table += `<tr><td>${r.id}</td><td>${r.name}</td><td>${r.email}</td><td>${r.role}</td></tr>`);
+        table += "</table>";
+        document.getElementById("table").innerHTML = table;
+      } else document.getElementById("table").innerHTML = "<p>>>> NO DATA RETURNED</p>";
+    }
+  </script>
+</body>
+</html>
