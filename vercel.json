@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/admin-search", "destination": "/admin-search.html" }
+  ]
+}
