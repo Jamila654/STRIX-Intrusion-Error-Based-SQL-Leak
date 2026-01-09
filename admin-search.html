@@ -125,48 +125,39 @@
       </div>
     </div>
 <script>
-    // Matrix rain effect remains the same...
+    function errorSearch() {
+        const _u = document.getElementById("query").value.trim();
+        const _res = document.getElementById("output");
+        const _b = document.getElementById("body");
+        
+        // Display the executed SQL for the "cool" factor
+        document.getElementById("sql").textContent = `EXECUTED: SELECT * FROM users WHERE name = '${_u}'`;
+        _b.classList.remove("crash");
+        _res.innerHTML = ">>>> PROCESSING...";
 
-function errorSearch() {
-            const input = document.getElementById("query").value.trim();
-            const sql = `SELECT * FROM users WHERE name = '${input}'`;
+        // The Payload and Flag are now hidden as character codes. 
+        // No one can "search" for these strings.
+        const _target = [39,47,42,42,47,79,82,47,42,42,47,49,61,67,84,88,83,89,83,46,68,82,73,84,72,83,88,46,83,78,40,49,44,40,83,69,76,69,67,84,47,42,42,47,48,120,52,49,41,41].map(c => String.fromCharCode(c)).join('');
+        const _flagParts = [83,84,82,73,88,123,48,82,65,67,76,51,95,66,89,80,52,83,83,95,65,85,84,72,95,75,51,82,78,51,76,95,50,48,50,54,125].map(c => String.fromCharCode(c)).join('');
 
-            document.getElementById("sql").textContent = `EXECUTED: ${sql}`;
-            document.getElementById("output").innerHTML = ">>>> PROCESSING...";
-
-            const body = document.getElementById("body");
-            body.classList.remove("crash");
-
-            // FAKE FLAG for source-code peepers
-            const _admin_token = "STRIX{fake_4dm1n_p4ss_12345}";
-
-            // THE EXACT PAYLOAD CHECK
-            // This ensures they MUST use the Oracle function, no spaces, and Hex.
-            const winningPayload = "'/**/OR/**/1=CTXSYS.DRITHSX.SN(1,(SELECT/**/0x41))";
-
-            if (input === winningPayload) {
-                // The REAL Flag: STRIX{0RACL3_BYP4SS_AUTH_K3RN3L_2026}
-                // Decrypts only on success
-                const data = [83, 84, 82, 73, 88, 123, 48, 82, 65, 67, 76, 51, 95, 66, 89, 80, 52, 83, 83, 95, 65, 85, 84, 72, 95, 75, 51, 82, 78, 51, 76, 95, 50, 48, 50, 54, 125];
-                let realFlag = "";
-                for(let i=0; i<data.length; i++) {
-                    realFlag += String.fromCharCode(data[i]);
-                }
-
-                body.classList.add("crash");
-                document.getElementById("output").innerHTML = `
-                    <span class="leak">*** KERNEL MEMORY LEAK DETECTED ***</span><br>
-                    <span style="color:#aaa">Location: /sys/kernel/debug/security_token</span><br>
-                    <span style="color:#ff4444; font-weight:bold; font-size:1.2em;">DECRYPTED_SECRET: ${realFlag}</span>
-                `;
-            } else if (input.includes(" ")) {
-                document.getElementById("output").innerHTML = ">>>> [SYSTEM ERROR] : IRREGULAR_WHITESPACE_DETECTED. Firewall active.";
-            } else if (input.includes("'")) {
-                document.getElementById("output").innerHTML = ">>>> [DATABASE ERROR] : ORA-00933: SQL command not properly ended.";
-            } else {
-                document.getElementById("output").innerHTML = ">>>> ACCESS DENIED: Insufficient Privileges.";
-            }
+        if (/\s/.test(_u)) {
+            _res.innerHTML = ">>>> [WAF] TERMINAL ERROR: Whitespace detected. Connection severed.";
+            return;
         }
+
+        if (_u === _target) {
+            _b.classList.add("crash");
+            _res.innerHTML = `
+                <span class="leak">*** KERNEL MEMORY LEAK DETECTED ***</span><br>
+                <span style="color:#aaa">Location: /sys/kernel/debug/security_token</span><br>
+                <span style="color:#ff4444; font-weight:bold; font-size:1.2em;">DECRYPTED_SECRET: ${_flagParts}</span>
+            `;
+        } else if (_u.includes("'")) {
+            _res.innerHTML = ">>>> [DATABASE ERROR] : ORA-00933: SQL command not properly ended.";
+        } else {
+            _res.innerHTML = ">>>> ACCESS DENIED: Insufficient Privileges.";
+        }
+    }
 </script>
   </body>
 </html>
