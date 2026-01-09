@@ -124,59 +124,49 @@
         <a href="/" style="color: #0ff">EXIT</a>
       </div>
     </div>
-    <script>
-      // Matrix effect remains the same...
+<script>
+    // Matrix rain effect remains the same...
 
-      function errorSearch() {
-        const input = document.getElementById("query").value.trim();
-        const sql = `SELECT * FROM users WHERE name = '${input}'`;
-        document.getElementById("sql").textContent = `EXECUTED: ${sql}`;
+function errorSearch() {
+            const input = document.getElementById("query").value.trim();
+            const sql = `SELECT * FROM users WHERE name = '${input}'`;
 
-        const outputDiv = document.getElementById("output");
-        const body = document.getElementById("body");
-        body.classList.remove("crash");
-        outputDiv.innerHTML = ">>>> PROCESSING...";
+            document.getElementById("sql").textContent = `EXECUTED: ${sql}`;
+            document.getElementById("output").innerHTML = ">>>> PROCESSING...";
 
-        // FAKE FLAG - Distraction for people inspecting source
-        const _system_root = "STRIX{d3bu6_fl46_n0t_r34l}";
+            const body = document.getElementById("body");
+            body.classList.remove("crash");
 
-        // THE ELITE DETECTION LOGIC
-        // 1. No spaces allowed (WAF simulation)
-        // 2. Must use the specific Oracle-style error function
-        // 3. Payload must be exactly 52 characters long to trigger the correct key
-        const complexPattern =
-          /^'\/\*\*\/OR\/\*\*\/1=CTXSYS\.DRITHSX\.SN\(1,\(SELECT\/\*\*\/0x[0-9a-fA-F]{2}\)\)$/i;
+            // FAKE FLAG for source-code peepers
+            const _admin_token = "STRIX{fake_4dm1n_p4ss_12345}";
 
-        if (input.includes(" ")) {
-          outputDiv.innerHTML =
-            ">>>> ERROR: WAF Blocked 'Space' Character. Use HEX or Comments.";
-        } else if (complexPattern.test(input)) {
-          // THE REAL FLAG GENERATION
-          // It only constructs the flag IF the payload matches perfectly.
-          const part1 = [
-            22, 1, 23, 11, 28, 69, 17, 10, 1, 19, 15, 12, 10, 31, 69, 1, 22, 2,
-            7, 7, 69, 11, 10, 1, 2, 22, 1, 10, 28, 26,
-          ];
-          const salt = input.length; // Key is dependent on the payload length!
+            // THE EXACT PAYLOAD CHECK
+            // This ensures they MUST use the Oracle function, no spaces, and Hex.
+            const winningPayload = "'/**/OR/**/1=CTXSYS.DRITHSX.SN(1,(SELECT/**/0x41))";
 
-          let realFlag = "STRIX{";
-          for (let i = 0; i < part1.length; i++) {
-            realFlag += String.fromCharCode(part1[i] ^ salt);
-          }
-          realFlag += "}";
+            if (input === winningPayload) {
+                // The REAL Flag: STRIX{0RACL3_BYP4SS_AUTH_K3RN3L_2026}
+                // Decrypts only on success
+                const data = [83, 84, 82, 73, 88, 123, 48, 82, 65, 67, 76, 51, 95, 66, 89, 80, 52, 83, 83, 95, 65, 85, 84, 72, 95, 75, 51, 82, 78, 51, 76, 95, 50, 48, 50, 54, 125];
+                let realFlag = "";
+                for(let i=0; i<data.length; i++) {
+                    realFlag += String.fromCharCode(data[i]);
+                }
 
-          body.classList.add("crash");
-          outputDiv.innerHTML = `
-                <span class="leak">DATABASE ERROR!</span><br>
-                Illegal Address Leak at 0x88FF: ${realFlag}
-            `;
-        } else if (input.includes("'")) {
-          outputDiv.innerHTML =
-            ">>>> SQL Syntax error... but no leak. Keep digging.";
-        } else {
-          outputDiv.innerHTML = ">>>> No results found.";
+                body.classList.add("crash");
+                document.getElementById("output").innerHTML = `
+                    <span class="leak">*** KERNEL MEMORY LEAK DETECTED ***</span><br>
+                    <span style="color:#aaa">Location: /sys/kernel/debug/security_token</span><br>
+                    <span style="color:#ff4444; font-weight:bold; font-size:1.2em;">DECRYPTED_SECRET: ${realFlag}</span>
+                `;
+            } else if (input.includes(" ")) {
+                document.getElementById("output").innerHTML = ">>>> [SYSTEM ERROR] : IRREGULAR_WHITESPACE_DETECTED. Firewall active.";
+            } else if (input.includes("'")) {
+                document.getElementById("output").innerHTML = ">>>> [DATABASE ERROR] : ORA-00933: SQL command not properly ended.";
+            } else {
+                document.getElementById("output").innerHTML = ">>>> ACCESS DENIED: Insufficient Privileges.";
+            }
         }
-      }
-    </script>
+</script>
   </body>
 </html>
